@@ -7,11 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import db.connections.MySqlConnection;
-
 import java.util.Set;
 
+import db.connections.MySqlConnection;
 import utilities.StringUtil;
 
 public class EntityClassGenerator extends EntityGenerator {

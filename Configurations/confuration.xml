@@ -1,9 +1,10 @@
 <configuration>
 	<arguments>
-		<tables>reports_info,reports,employee,checking_enum</tables>
+		<tables>system_user</tables>
 		<entity_path>C:\Java\myFuelWorkspace\Entities\src\db\entity</entity_path>
 		<bridge_path>C:\Java\myFuelWorkspace\Entities\src\db\entity\bridge</bridge_path>
 		<services_path>C:\Java\myFuelWorkspace\Entities\src\db\services</services_path>
 		<visitor_path>C:\Java\myFuelWorkspace\Entities\src\visitor</visitor_path>
+		<controls_wrappers>C:\Java\myFuelWorkspace\MyFuelClient\src\wrapper</controls_wrappers>
 	</arguments>
 </configuration>

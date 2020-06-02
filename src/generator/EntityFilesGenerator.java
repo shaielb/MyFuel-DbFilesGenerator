@@ -11,7 +11,7 @@ public class EntityFilesGenerator {
 
 	private static ClassGenerator _classGenerator;
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		try {
 			Map<String, String> arguments = Configuration.arguemnts();
 
@@ -23,9 +23,10 @@ public class EntityFilesGenerator {
 				String bridgePath = arguments.get("bridge_path");
 				String servicesPath = arguments.get("services_path");
 				String visitorPath = arguments.get("visitor_path");
+				String controlsWrappers = arguments.get("controls_wrappers");
 				String[] tables = tablesArg.split(",");
 				try {
-					_classGenerator.createTablesFiles(entityPath, bridgePath, servicesPath, visitorPath, tables);
+					_classGenerator.createTablesFiles(entityPath, bridgePath, servicesPath, visitorPath, controlsWrappers, tables);
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (SQLException e) {
