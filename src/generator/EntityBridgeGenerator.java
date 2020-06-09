@@ -32,7 +32,7 @@ public class EntityBridgeGenerator extends EntityGenerator {
 						"	private static Object _lock = new Object();\r\n" + 
 						"	private static <ClassName>Bridge _instance;\r\n" + 
 						"	\r\n" + 
-						"	private <ClassName>Bridge() { }\r\n\n" +
+						"	private <ClassName>Bridge() {}\r\n\n" +
 						"	public static <ClassName>Bridge getInstance() {\r\n" + 
 						"		if (_instance == null) {\r\n" + 
 						"			synchronized(_lock) {\r\n" + 
@@ -42,6 +42,9 @@ public class EntityBridgeGenerator extends EntityGenerator {
 						"			}\r\n" +
 						"		}\r\n" +
 						"		return _instance;\r\n" +
+						"	}\r\n\n" +
+						"	public IEntity createEntity() {\r\n" + 
+						"		return new <ClassName>();\r\n" + 
 						"	}\r\n\n" +
 						"	@Override\r\n" +
 						"	public void populateEntity(IEntity ientity, IGetValue<Integer, String, Object> iterator) throws SQLException, InterruptedException {\r\n" + 
@@ -60,6 +63,13 @@ public class EntityBridgeGenerator extends EntityGenerator {
 						"	@Override\r\n" +
 						"	public String getTableName() {\r\n" +
 						"		return TableName;\r\n" + 
+						"	}\r\n\n" + 
+						"	@Override\r\n" +
+						"	public List<IEntity> getForeignEntities(IEntity ientity) {\r\n" +
+						"		<ClassName> entity = (<ClassName>) ientity;\r\n" + 
+						"		List<IEntity> list = new ArrayList<IEntity>();\r\n" +
+						"<CollectForeignEntities>\r\n" + 
+						"		return list;\r\n" + 
 						"	}\r\n" + 
 						"}", new HashMap<String, String>() {{
 							put("<ClassName>", className);
@@ -69,6 +79,7 @@ public class EntityBridgeGenerator extends EntityGenerator {
 
 		List<String> setValues = new ArrayList<String>();
 		List<String> getValues = new ArrayList<String>();
+		List<String> foreignEntities = new ArrayList<String>();
 		Set<String> imports = new HashSet<String>();
 		List<String> updateForeignKeys = new ArrayList<String>();
 		List<String> insertForeignKeys = new ArrayList<String>();
@@ -78,6 +89,8 @@ public class EntityBridgeGenerator extends EntityGenerator {
 		imports.add("import java.sql.SQLException;");
 		imports.add("import db.interfaces.*;");
 		imports.add(String.format("import db.entity.%s;", className));
+		imports.add("import java.util.ArrayList;");
+		imports.add("import java.util.List;");
 
 		int i = 0;
 		for (Entry<String, String> entry : info.entrySet()) {
@@ -96,22 +109,30 @@ public class EntityBridgeGenerator extends EntityGenerator {
 						put("<AttributeName>", attributeName);
 					}}));
 			//if (!isFk) {
-				imports.add(String.format("import %s;", type));
-				getValues.add(StringUtil.replace(
-						"		entity.set<AttributeName>((<TypeName>) iterator.get(" + i + ", \"<Name>\"));"
-						, new HashMap<String, String>() {{
-							put("<ClassName>", className);
-							put("<AttributeName>", attributeName);
-							put("<TypeName>", typeName);
-							put("<Name>", name);
-						}}));
+			imports.add(String.format("import %s;", type));
+			getValues.add(StringUtil.replace(
+					"		entity.set<AttributeName>((<TypeName>) iterator.get(" + i + ", \"<Name>\"));"
+					, new HashMap<String, String>() {{
+						put("<ClassName>", className);
+						put("<AttributeName>", attributeName);
+						put("<TypeName>", typeName);
+						put("<Name>", name);
+					}}));
 			//}
+			if (name.endsWith("_fk")) {
+				foreignEntities.add(StringUtil.replace(
+						"		list.add(entity.get<AttributeName>());"
+						, new HashMap<String, String>() {{
+							put("<AttributeName>", attributeName);
+						}}));
+			}
 			++i;
 		}
 		template = StringUtil.replace(template, new HashMap<String, String>() {{
 			put("<CollectFromEntity>", String.join("\n", setValues));
 			put("<PopulateEntity>", String.join("\n", getValues));
 			put("<Imports>", String.join("\n", imports));
+			put("<CollectForeignEntities>", String.join("\n", foreignEntities));
 		}});
 		template = StringUtil.replace(template, new HashMap<String, String>() {{
 			put("<UpdateForeignKeys>", String.join("\n", updateForeignKeys));
