@@ -192,76 +192,130 @@ public class ControlsMapGenerator extends EntityGenerator {
 											String.join("\r\n", entitiesAssignments) + "\r\n\n") : "");
 						}});
 	}
+	
+	private String populateEntities(String[] entitiesParts, String field, String nameType) {
+		String fieldObject = "";
+		for (int i = 1; i < entitiesParts.length - 1; ++i) {
+			String className = StringUtil.swithToUpperCase(entitiesParts[i], "_");
+			String objectName = StringUtil.firstToLowerCase(className);
+
+			try {
+				Class.forName("db.entity." + className).getDeclaredField("_" + field);
+				fieldObject = objectName += nameType;
+			} catch (Exception e) {}
+
+			instanciators.add(String.format("\t\t%s %s = new %s();", className, objectName, className));
+			if (i > 1) {
+				for (int j = 1; j < entitiesParts.length - 1; ++j) {
+					String classNameJ = StringUtil.swithToUpperCase(entitiesParts[j], "_");
+					String objectNameJ = StringUtil.firstToLowerCase(classNameJ);
+
+					try {
+						Class.forName("db.entity." + classNameJ).getDeclaredField("_" + field);
+						objectNameJ += nameType;
+					} catch (Exception e) {}
+
+					try {
+						Class.forName("db.entity." + classNameJ).getDeclaredField("_" + entitiesParts[i]);
+						entitiesAssignments.add(String.format("\t\t%s.set%s(%s);", objectNameJ, className, objectName));
+					} catch (Exception e) {
+						try {
+							Class.forName("db.entity." + className).getDeclaredField("_" + entitiesParts[j]);
+							entitiesAssignments.add(String.format("\t\t%s.set%s(%s);", objectName, classNameJ, objectNameJ));
+						} catch (Exception e1) {}
+					}
+				}
+			}
+		}
+		return fieldObject;
+	}
 
 	private void populateTableControl(String controlName, String fxId, Map<String, List<String>> grouped) {
 		String[] fxIdParts = fxId.split("\\$\\$\\$");
 		String nameType = "";
+		String entityNameType = "";
+		String enumType = "";
+		String enumValue = "";
 		if (fxIdParts.length > 1 && fxIdParts[1].contains("$")) {
+			String[] firstParts = fxIdParts[0].split("\\$");
+			enumType = firstParts[firstParts.length - 1];
 			String[] ntParts = fxIdParts[1].split("\\$");
+			enumValue = ntParts[0];
 			fxIdParts[0] += "$" + ntParts[1];
 		}
 		if (fxIdParts.length > 1) {
-			nameType = StringUtil.swithToUpperCase(fxIdParts[1], "\\$");
+			nameType = StringUtil.swithToUpperCase(fxIdParts[1], new String[] { "\\$", "_" });
+			if (fxIdParts[1].contains("$")) {
+				entityNameType = nameType;
+			}
 		}
 		String nameTypeF = nameType;
 		String fxIdF = fxId;
 
 		String[] paramValuesParts = fxIdParts[0].split("\\$\\$");
 		String[] entitiesParts = paramValuesParts[0].split("\\$");
-		String lastObjectName = null;
-		for (int i = 1; i < entitiesParts.length - 1; ++i) {
-			String className = StringUtil.swithToUpperCase(entitiesParts[i], "_");
-			String objectName = StringUtil.firstToLowerCase(className);
-			instanciators.add(String.format("\t\t%s %s = new %s();", className, objectName, className));
-			if (i > 1) {
-				String lastClassName = StringUtil.firstToUpperCase(lastObjectName);
-				try {
-					if (lastClassName.equals("Payment") || className.equals("Payment")) {
-						System.out.println();
-					}
-					Class.forName("db.entity." + lastClassName).getDeclaredField("_" + entitiesParts[i]);
-					entitiesAssignments.add(String.format("\t\t%s.set%s(%s);", lastObjectName, className, objectName));
-				} catch (NoSuchFieldException | SecurityException | ClassNotFoundException e) {
-					entitiesAssignments.add(String.format("\t\t%s.set%s(%s);", objectName, lastClassName, lastObjectName));
-				}
-			}
-			lastObjectName = objectName;
-		}
 
 		String field = entitiesParts[entitiesParts.length - 1];
 		String fieldVarName = StringUtil.swithToUpperCase(field, "_");
 		fieldVarName = StringUtil.firstToLowerCase(fieldVarName);
+		// check who's field this is
+		String fieldObject = populateEntities(entitiesParts, field, entityNameType);
 
 		String fvName = fieldVarName;
-		String loName = lastObjectName;
-		String value = paramValuesParts.length > 1 ? 
-				StringUtil.firstToUpperCase(paramValuesParts[1]) : "";
-				controlsInstanciators.add(
-						StringUtil.replace(
-								"\t\tMf<Control> <FieldVarName>Control<Value><NameType> = new Mf<Control>((<Control>) _scene.lookup(\"#<FxId>\"));",
+		String fo = fieldObject;
+		String value = (paramValuesParts.length > 1) ? StringUtil.firstToUpperCase(paramValuesParts[1]) : "";
+		String setValidValue = "";
+		String validValue = "";
+		if (paramValuesParts.length > 1) {
+			String enumClass = field;
+			if (enumClass.endsWith("_enum")) {
+				try {
+					Class.forName("db.entity." + StringUtil.swithToUpperCase(field, "_"));
+					validValue = String.format("_client.getEnum(\"%s\", \"%s\")", enumClass, paramValuesParts[1]);
+				} catch (Exception e) {
+					validValue = String.format("\"%s\"", paramValuesParts[1]);
+				}
+			}
+			else {
+				validValue = String.format("\"%s\"", paramValuesParts[1]);
+			}
+			String fValidValue = validValue;
+			setValidValue = StringUtil.replace(
+					"\n\t\t<FieldVarName>Control<Value><NameType>.setValidValue(<ValidValue>);",
+					new HashMap<String, String>() {{
+						put("<FieldVarName>", fvName);
+						put("<ValidValue>", fValidValue);
+						put("<NameType>", nameTypeF);
+					}});
+		}
+		controlsInstanciators.add(
+				StringUtil.replace(
+						"\t\tMf<Control> <FieldVarName>Control<Value><NameType> = new Mf<Control>((<Control>) _scene.lookup(\"#<FxId>\"));",
+						new HashMap<String, String>() {{
+							put("<Control>", controlName);
+							put("<Value>", value);
+							put("<FieldVarName>", fvName);
+							put("<FxId>", fxIdF);
+							put("<NameType>", nameTypeF);
+						}}));
+		String fSetValidValue = setValidValue;
+		fields.add(
+				StringUtil.replace(
+						"\t\t<FieldVarName>Control<Value><NameType>.setField(<Entity>.getClass().getDeclaredField(\"_<FieldName>\"));\r\n" +
+								"\t\t<FieldVarName>Control<Value><NameType>.setEntity(<Entity>);<SetValidValue>",
 								new HashMap<String, String>() {{
-									put("<Control>", controlName);
-									put("<Value>", value);
 									put("<FieldVarName>", fvName);
-									put("<FxId>", fxIdF);
+									put("<Value>", value);
+									put("<SetValidValue>", fSetValidValue);
+									put("<FieldName>", field);
+									put("<Entity>", fo);
 									put("<NameType>", nameTypeF);
 								}}));
-				fields.add(
-						StringUtil.replace(
-								"\t\t<FieldVarName>Control<Value><NameType>.setField(<Entity>.getClass().getDeclaredField(\"_<FieldName>\"));\r\n" +
-										"\t\t<FieldVarName>Control<Value><NameType>.setEntity(<Entity>);",
-										new HashMap<String, String>() {{
-											put("<FieldVarName>", fvName);
-											put("<Value>", value);
-											put("<FieldName>", field);
-											put("<Entity>", loName);
-											put("<NameType>", nameTypeF);
-										}}));
-				String groupKey = paramValuesParts[0];
-				if (!grouped.containsKey(groupKey)) {
-					grouped.put(groupKey, new ArrayList<String>());
-				}
-				grouped.get(groupKey).add(fieldVarName + "Control" + value + nameTypeF);
+		String groupKey = paramValuesParts[0];
+		if (!grouped.containsKey(groupKey)) {
+			grouped.put(groupKey, new ArrayList<String>());
+		}
+		grouped.get(groupKey).add(fieldVarName + "Control" + value + nameTypeF);
 	}
 
 	private void populateActionControl(String controlName, String fxId) {

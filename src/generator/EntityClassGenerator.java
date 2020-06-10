@@ -13,12 +13,12 @@ import db.connections.MySqlConnection;
 import utilities.StringUtil;
 
 public class EntityClassGenerator extends EntityGenerator {
-	
+
 	private MySqlConnection _connection;
 
 	public void generateEntity(File directory, String table, Map<String, String> info) throws IOException {
 		Map<String, String> fkMap = _connection.retrieveTableFkMap(table);
-		
+
 		Set<String> imports = new HashSet<String>();
 		List<String> fields = new ArrayList<String>();
 		List<String> accessers = new ArrayList<String>();
@@ -59,31 +59,41 @@ public class EntityClassGenerator extends EntityGenerator {
 			imports.add(String.format("import %s;", type));
 			fields.add(String.format(
 					"\t@Column(Name=\"%s\", Index=%d)\n" + 
-					fkTable + 
-					"\tprivate %s _%s;", name, i, typeName, varName));
+							fkTable + 
+							"\tprivate %s _%s;", name, i, typeName, varName));
 			accessers.add(String.format("\tpublic %s get%s() {\n\t\treturn _%s;\n\t}", 
 					typeName, attributeName, varName));
 			accessers.add(String.format("\tpublic void set%s(%s %s) {\n\t\t_%s = %s;\n\t}", 
 					attributeName, typeName, varName, varName, varName));
 			toString.add(String.format(
 					"\t\tif (_%s != null) {\n" + 
-					"\t\t\tlist.add(\"\t%s: \" + _%s);\n" + 
-					"\t\t}", varName, varName, varName));
+							"\t\t\tlist.add(\"\t%s: \" + _%s);\n" + 
+							"\t\t}", varName, varName, varName));
 			++i;
 		}
 		if (!enumFound) {
 			classTitle = classTitle.replace("<Enum>", "");
 		}
+		else {
+			accessers.add(
+					"	@Override\r\n" + 
+					"	public boolean equals(Object other) {\r\n" + 
+					"		if (other instanceof IEnum) {\r\n" + 
+					"			return getKey().equals(((IEnum) other).getKey());\r\n" + 
+					"		}\r\n" + 
+					"		return false;\r\n" + 
+					"	}");
+		}
 		accessers.add(String.format(
 				"\tpublic String toString() {\n" + 
-					"\t\tList<String> list = new ArrayList<String>();\n" +
-					String.join("\n", toString) + "\n" + 
-					"\t\treturn \"table %s:\\n\" + String.join(\"\\n\", list);\n\t}", table));
+						"\t\tList<String> list = new ArrayList<String>();\n" +
+						String.join("\n", toString) + "\n" + 
+						"\t\treturn \"table %s:\\n\" + String.join(\"\\n\", list);\n\t}", table));
 
 		createTableFile(directory, classTitle, className, imports, fields, null, accessers);
 		System.out.println("");
 	}
-	
+
 	public void setConnection(MySqlConnection connection) {
 		_connection = connection;
 	}
