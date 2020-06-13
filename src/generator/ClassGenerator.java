@@ -9,20 +9,50 @@ import utilities.FileUtil;
 
 public class ClassGenerator {
 
+	/**
+	 * 
+	 */
 	private MySqlConnection _connection = new MySqlConnection();
 
+	/**
+	 * 
+	 */
 	private EntityClassGenerator _entityClassGenerator = new EntityClassGenerator();
+	/**
+	 * 
+	 */
 	private EntityBridgeGenerator _entityBridgeGenerator = new EntityBridgeGenerator();
+	/**
+	 * 
+	 */
 	private ServicesGenerator _servicesGenerator = new ServicesGenerator();
+	/**
+	 * 
+	 */
 	private EntityVisitorGenerator _entityVisitorGenerator = new EntityVisitorGenerator();
+	/**
+	 * 
+	 */
 	private ControlsMapGenerator _controlsWrappers = new ControlsMapGenerator();
 
+	/**
+	 * @throws SQLException
+	 */
 	public ClassGenerator() throws SQLException {
 		_connection = new MySqlConnection();
 		_connection.connect("localhost", 3306, "myfuel", "myfuel", "1234");
 		_entityClassGenerator.setConnection(_connection);
 	}
 
+	/**
+	 * @param entityPath
+	 * @param bridgePath
+	 * @param servicesPath
+	 * @param visitorPath
+	 * @param controlsWrappers
+	 * @param tables
+	 * @throws Exception
+	 */
 	public void createTablesFiles(String entityPath, String bridgePath, String servicesPath, String visitorPath, String controlsWrappers, String[] tables) throws Exception {
 		File entitiesDir = null, bridgeDir = null, servicesDir = null, visitorDir = null, controlsWrappersDir = null;
 		entitiesDir = FileUtil.deleteSubDirectories(entityPath);

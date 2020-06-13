@@ -1,6 +1,6 @@
 <configuration>
 	<arguments>
-		<tables>customers_ratings_view,address,analytical_ratings,car,car_fueling,customer,customers_ratings,driver,employee,fuel_company_enum,fuel_enum,fuel_in_company,fueling_purchase,home_heating_discount_enum,home_heating_order,marketing_manager_reports,order_urgency_enum,payment,person,pricing_model_enum,special_sales_enum,station,station_manager_reports,station_supply_order,stations_fuel,subscription_plan,subscription_plan_rates_enum,system_user</tables>
+		<tables>address,analytical_ratings,car,car_fueling,customer,customers_ratings,driver,employee,fuel_company_enum,fuel_enum,fuel_in_company,fueling_purchase,home_heating_discount_enum,home_heating_order,marketing_manager_reports,order_urgency_enum,payment,person,pricing_model_enum,special_sales_enum,special_sales_history,station,station_manager_reports,station_supply_order,stations_fuel,subscription_plan,subscription_plan_rates_enum,system_user</tables>
 		<entity_path>C:\Java\myFuelWorkspace\Entities\src\db\entity</entity_path>
 		<bridge_path>C:\Java\myFuelWorkspace\Entities\src\db\entity\bridge</bridge_path>
 		<services_path>C:\Java\myFuelWorkspace\Entities\src\db\services</services_path>

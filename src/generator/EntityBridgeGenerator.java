@@ -47,7 +47,7 @@ public class EntityBridgeGenerator extends EntityGenerator {
 						"		return new <ClassName>();\r\n" + 
 						"	}\r\n\n" +
 						"	@Override\r\n" +
-						"	public void populateEntity(IEntity ientity, IGetValue<Integer, String, Object> iterator) throws SQLException, InterruptedException {\r\n" + 
+						"	public void populateEntity(IEntity ientity, IGetValue<Integer, String, Object, Object> iterator) throws SQLException, InterruptedException {\r\n" + 
 						"		<ClassName> entity = (<ClassName>) ientity;\r\n" + 
 						"<PopulateEntity>\r\n" + 
 						"	}\r\n\n" +
@@ -111,7 +111,7 @@ public class EntityBridgeGenerator extends EntityGenerator {
 			//if (!isFk) {
 			imports.add(String.format("import %s;", type));
 			getValues.add(StringUtil.replace(
-					"		entity.set<AttributeName>((<TypeName>) iterator.get(" + i + ", \"<Name>\"));"
+					"		entity.set<AttributeName>((<TypeName>) iterator.get(" + i + ", \"<Name>\", entity.get<AttributeName>()));"
 					, new HashMap<String, String>() {{
 						put("<ClassName>", className);
 						put("<AttributeName>", attributeName);
